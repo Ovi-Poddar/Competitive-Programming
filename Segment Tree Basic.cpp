@@ -7,9 +7,12 @@ using namespace std;
 
 const int N = 2e5 + 5;
 
+int n;
+int a[N];
+
 struct Node
 {
-	int seg, pref, suf, sum; //Node Property
+	int sum; //modify it
 };
 
 struct segtree
@@ -17,118 +20,88 @@ struct segtree
 	int siz;
 	vector<Node> tree;
 
-	Node NEUTRAL_ELEMENT = {0, 0, 0, 0}; //modify it
+	Node NEUTRAL_ELEMENT = {0}; //modify it
 
-	Node merge(Node &a, Node &b) //modify it 
+	Node merge(Node &a, Node &b) //modify it
 	{
-		return {
-			max(a.seg, max(b.seg, a.suf + b.pref)),
-			max(a.pref, a.sum + b.pref),
-			max(b.suf, a.suf + b.sum),
-			a.sum + b.sum
-		};
+		return {a.sum + b.sum};
 	}
 
 	Node single(int val) //modify it
 	{
-		if (val > 0) {
-			return {val, val, val, val};
-		}
-		else {
-			return {0, 0, 0, val};
-		}
+		return {val};
 	}
 
-	void init(int n) 
+	void init(int n)
 	{
 		siz = 1;
 		while (siz < n) siz *= 2;
-		tree.resize(2 * siz);
+		tree.resize(2 * siz + 100);
 	}
-	void build(vector<int> &a, int x, int lx, int rx)
+	void build( int x, int lx, int rx)
 	{
-		if (rx - lx == 1)
+		if (rx == lx )
 		{
-			if (lx < (int)a.size())
-			{
+			if(lx <= n)
 				tree[x] = single(a[lx]);
-			}
 			return;
 		}
 		int mid = (lx + rx) / 2;
-		build(a, 2 * x + 1, lx, mid);
-		build(a, 2 * x + 2, mid, rx);
-		tree[x] = merge(tree[2 * x + 1], tree[2 * x + 2]);
+		build( 2 * x , lx, mid);
+		build( 2 * x + 1, mid + 1, rx);
+		tree[x] = merge(tree[2 * x ], tree[2 * x + 1]);
 	}
-	void build(vector<int> &a)
+	void build()
 	{
-		build(a, 0, 0, siz);
+		build( 1, 1, siz);
 	}
-	void update(int i, int val, int x, int lx, int rx) //[lx, rx)
+	void update(int i, int val, int x, int lx, int rx)
 	{
-		if (rx - lx == 1)
+		if (rx == lx )
 		{
 			tree[x] = single(val);
 			return;
 		}
 		int mid = (lx + rx) / 2;
-		if ( i < mid) {
-			update(i, val, 2 * x + 1, lx, mid);
+		if ( i <= mid) {
+			update(i, val, 2 * x , lx, mid);
 		}
 		else {
-			update(i, val, 2 * x + 2, mid, rx);
+			update(i, val, 2 * x + 1, mid + 1, rx);
 		}
-		tree[x] = merge(tree[2 * x + 1], tree[2 * x + 2]);
+		tree[x] = merge(tree[2 * x ], tree[2 * x + 1]);
 	}
-
 	void update(int i, int val) //sets index i to val
 	{
-		update(i, val, 0, 0, siz);
+		update(i, val, 1, 1, siz);
 	}
-	Node query(int l, int r, int x, int lx, int rx) //[lx, rx), [l, r) 
+	Node query(int l, int r, int x, int lx, int rx)
 	{
-		if ( lx >= r || rx <= l) return NEUTRAL_ELEMENT;
+		if ( lx > r || rx < l) return NEUTRAL_ELEMENT;
 		if (lx >= l && rx <= r) return tree[x];
 		int mid = (lx + rx) / 2;
-		Node s1 = query(l, r, 2 * x + 1, lx, mid);
-		Node s2 = query(l, r, 2 * x + 2, mid, rx);
+		Node s1 = query(l, r, 2 * x , lx, mid);
+		Node s2 = query(l, r, 2 * x + 1, mid + 1, rx);
 		return merge(s1, s2);
 	}
-	Node query(int l, int r) //[l, r)
+	Node query(int l, int r)
 	{
-		return query(l, r, 0, 0, siz);
+		return query(l, r, 1, 1, siz);
 	}
-
 };
-	
-//Problem Link :-
-//https://codeforces.com/edu/course/2/lesson/4/2/practice/contest/273278/problem/A
 
 int32_t main()
 {
 	IOS;
 
-	int n, m;
-	cin >> n >> m;
+	cin >> n;
+	for (int i = 1; i <= n; i++) cin >> a[i];
 
 	segtree st;
 	st.init(n);
-	
-	vector<int> a(n);
-	for (int i = 0; i < n; i++) {
-		cin >> a[i];
-	}
+	st.build();
 
-	st.build(a);
-	cout << st.query(0, n).seg << endl;
-	while (m--)
-	{
-		int i, val;
-		cin >> i >> val;
-		st.update(i, val);
-		cout << st.query(0, n).seg << endl;
-
-	}
+	cout<<st.query(1, n).sum;
 
 	return 0;
 }
